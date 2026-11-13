@@ -50,17 +50,18 @@ def main() -> None:
     maxp = mp.cpu_count()
     strong = {}
     inflection = None
-    with mp.Pool(maxp) as pool:
-        for p in range(1, maxp + 1):
+    for p in range(1, maxp + 1):
+        with mp.Pool(p) as pool:
             stats = run_benchmark(lambda p=p: pipeline(pool, N_STRONG, p), warmup=0, runs=3)
             strong[p] = stats.median_ms
             print(f"strong p={p}: {stats.median_ms:.3f} ms speedup={strong[1]/stats.median_ms:.3f} efficiency={strong[1]/stats.median_ms/p:.3f}")
-        a0 = time_stage_a(max(1, int(N_STRONG * .05)))
-        s = a0 / strong[1]
-        print(f"Amdahl serial fraction={s:.5f}; cap={1/s:.3f}")
-        weak = {}
-        gustafson = {}
-        for p in range(1, maxp + 1):
+    a0 = time_stage_a(max(1, int(N_STRONG * .05)))
+    s = a0 / strong[1]
+    print(f"Amdahl serial fraction={s:.5f}; cap={1/s:.3f}")
+    weak = {}
+    gustafson = {}
+    for p in range(1, maxp + 1):
+        with mp.Pool(p) as pool:
             stats = run_benchmark(lambda p=p: pipeline(pool, p * N0, p), warmup=0, runs=3)
             weak[p] = stats.median_ms
             alpha = time_stage_a(max(1, int(p * N0 * .05))) / weak[p]
